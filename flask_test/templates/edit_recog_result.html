@@ -1,0 +1,262 @@
+<html>
+
+
+    <head>
+        <meta charset="UTF-8">
+
+        <!-- jquery -->
+        <script src="/static/jquery-3.3.1.min.js"></script>
+
+       
+    </head>
+
+    <body>
+
+        <style>
+            #left_hand {
+                width: 70vw;
+                float: left;
+                margin-left: 2vw;
+            }
+            #right_hand {
+                width: 20vw;
+                float: left;
+                margin-left: 2vw;
+                min-height: 100%;
+                position: fixed; right: 5vw; top: 0;
+                background-color: lightgray;
+            }
+        </style>
+
+
+
+        <div id="left_hand">
+
+            <h1>区切るべきところで改行する</h1>
+
+            <!-- csv読み込みのためのボタン -->
+            <form name="myform">
+                <input type="file" name="select" id="loadBtn" />
+            </form>
+
+            <!-- ここに編集用の文章が入る -->
+            <div id="sentence_field"></div>
+    
+        </div>
+        
+        <!-- csvファイルから文章を読み込む -->
+        <script>
+
+            var start_time_list = [];
+            var end_time_list = [];
+            var id_starttime_dict = {};
+        
+            var loadBtn = document.querySelector("#loadBtn");
+            loadBtn.addEventListener('change', upload, false);
+
+            // アップロード時の処理
+            function upload(evt) {
+                
+                if (!isFileUpload()) {
+                    alert("エラー：FileAPI非対応のブラウザです。");
+                } else {
+                    var data = null;
+                    // 選択されたファイル情報を取得
+                    var file = evt.target.files[0];
+                    var reader = new FileReader();
+                    // ファイル読み取りを実行
+                    reader.readAsText(file);
+                    // ファイルの内容を表示
+                    reader.onload = function(event) {
+                        var result = event.target.result;
+                        listing = result.split("\n");
+
+                        for (var i=1; i<listing.length-1; i++){
+                            row = listing[i].split(",");  // listing[i]がcsvの一行を表す
+                            word = row[0];  // 単語
+                            start_time = row[1];  // start_time
+                            end_time = row[2]  // end_time
+                            is_split = row[3];  // 分割判定
+
+
+                            start_time_list.push(start_time);
+                            end_time_list.push(end_time);
+
+
+                            // テキストを差し込む
+                            var span_id = "ind_" + i
+                            if (is_split == 0){
+                                $("#sentence_field").append("<span id='" + span_id + "'>" + word + "</span>");
+                            }
+                            else {
+                                $("#sentence_field").append("<span id='" + span_id + "'>" + "<br>" + word + "</span>");
+                            }
+
+                            // 各<span>にidを設定
+                            id_starttime_dict[span_id] = start_time;
+                        };
+
+
+                        console.log(id_starttime_dict);
+
+                        // クリックされたら編集可能にする
+                        $("span").on("dblclick", function(){
+                            $("span").attr({"contenteditable":"false"});
+                            $(this).attr({"contenteditable":"true"});
+                        })
+                        
+                    };
+                    reader.onerror = function() {
+                        alert("エラー：ファイルをロードできません。");
+                    };
+                }
+            }
+
+            // ファイルアップロード判定
+            function isFileUpload() {
+                var isCompatible = false;
+                if (window.File && window.FileReader && window.FileList && window.Blob) {
+                isCompatible = true;
+                }
+                return isCompatible;
+            }
+            
+        </script>
+
+
+        
+        
+
+        <div id="right_hand">
+            <div>
+                <h2>改行する際はブロックの先頭に改行を入れること</h2>
+                <p>{{movie_name}}</p>
+            </div>
+
+            <style>
+                #right_hand {text-align: center;}
+                #right_hand button {width: 10vw; height: 10vh; margin: 1vh 0; background-color: pink;}
+            </style>
+
+            <!-- 動画プレーヤー -->
+            <div id="video_player">
+                <video id="video" src= {{movie_name}} controls></video>
+    
+                <style>
+                    video {width: 18vw;}
+                </style>
+        
+                <script>
+                    var vid = document.getElementById("video");
+    
+                    function setCurTime(start_time) {
+                        vid.currentTime = start_time; // 開始 22 秒
+                        vid.play();
+                    }
+
+
+                    // 文章がクリックされたら再生
+                    $(document).on('click', "span", function(){
+                        var the_id = $(this).attr("id");
+                        var start_time = Number(id_starttime_dict[the_id]);
+                        setCurTime(start_time);
+                    })
+                </script>
+    
+            </div>
+
+
+
+            <!-- 再生時間を表示 -->
+            <p align="center" id="hoge">
+                再生時間
+            </p>
+            <p id="time" align="center">
+                time
+            </p>
+        
+            <script>
+                function show_time(){
+                    var duration = vid.currentTime;
+                    var minutes = Math.floor(duration/60);
+                    var seconds = ("0" + Math.floor(duration - (minutes*60))).slice(-2);
+                    var min_sec = minutes + ":" + seconds;
+                    document.getElementById("time").innerHTML = min_sec;
+                }
+        
+                setInterval('show_time()',10);  // 1000msで1s
+            </script>
+
+
+
+            <!-- このボタンが押されたら動画を再生可能にする -->
+            <!-- <div>
+                <button id="change_mode">動画を再生可能に</button>
+            </div>
+            <script>
+                var can_be_played = false;  // 最初は再生しない設定
+                $("#change_mode").on("click", function(){
+                    console.log(id_starttime_dict);
+                })
+            </script> -->
+
+
+            <!-- 最後に編集結果を保存 -->
+            <button id="make_result">結果を出力して次の画面に</button>
+            <script>
+                $("#make_result").on("click", function(){
+                    text_list = []
+                    num_kaigyou_list = []
+                    $("span").each(function(){
+                        var text = $(this).text();
+                        var num_kaigyou = $(this).find("br").length;
+                        text_list.push(text);
+                        num_kaigyou_list.push(num_kaigyou);
+                    })
+                    console.log(num_kaigyou_list);
+                    send_result();
+                })
+            </script>
+
+
+            <script>
+                // 結果のcsvにして保存
+                function send_result(){
+                    var result = {
+                        "start_time" : start_time_list,
+                        "end_time" : end_time_list,
+                        "word" : text_list,
+                        "split" : num_kaigyou_list,
+                    };
+
+                    $.ajax({
+                        url: "./save_edited_sentence/no_mean",
+                        type:'POST',
+                        data : JSON.stringify(result),
+                        timeout:100000,  // 1000ミリ秒で１秒
+                        // dataType : "html"  // サーバからの返信タイプ
+                    })
+                    .done(function(resp){
+                        console.log("yes!");
+                        window.location.href = "/working_table";  // postが成功したら（csvが保存される）次の画面へ遷移
+                    })
+                    .fail(function(){
+                        console.log("oh my god");
+                    });
+
+                }
+            </script>
+
+
+            <!-- 最後のworkingテーブルへ -->
+            <p>結果のcsvがすでに保存されているとき</p>
+            <form method="GET" action="/working_table">
+                <button type="submit">単に次の画面へ進む</button>
+            </form>
+
+        </div>
+
+
+
+    </body>
+</html>

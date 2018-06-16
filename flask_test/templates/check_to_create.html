@@ -1,0 +1,40 @@
+<!doctype html> 
+<html lang = "ja"> 
+
+<head>
+<meta charset="UTF-8"> 
+
+<!-- jquery -->
+<script src="/static/jquery-3.3.1.min.js"></script>
+
+</head>
+
+<body>
+
+<div id="sousin">
+
+    <button>テロップ入りの動画を生成</button>
+
+    <style>
+        button {width: 20vw; height: 20vh; margin: 20vh 40vw; background-color: pink; font-size: 30px;}
+    </style>
+
+    <script>
+        $("button").on("click", function(){
+            $.ajax({
+                url: "/make_result_movie",
+                type:'GET',
+            })
+            .done(function(){
+                window.alert("完成品が/sozai/にできました!")
+            })
+            .fail(function(){
+                window.alert("oh my pasta");
+            });
+        })
+    </script>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!doctype html> 
+<html lang =" ja"> 
+
+<head> 
+    <meta charset="UTF-8">
+    <script> //<![CDATA[ // insert teh codez //]]> </script> 
+
+    <!-- jquery -->
+    <script type="text/javascript" src="/static/jquery-3.3.1.min.js"></script>
+
+    
+</head > 
+
+<p>{{movie_name}}</p>
+  
+<body>
+
+    <style>
+        body {text-align: center;}
+    </style>
+
+
+    <divs>
+        <div class="row">
+            <h1>音声認識　or　すでに完了</h1>
+        </div>
+    </div>
+
+
+
+    <!-- 対象の動画を表示 -->
+    <div id="video">
+
+        <!-- <video id="video" src={{movie_name}} controls></video> -->
+        <video id="video" src="/sozai/original.mp4" controls></video>
+
+        <style>
+            #video {margin: 2vh 0;}
+            video {width: 50vw;}
+        </style>
+
+    </div>
+
+
+
+    <!-- 選択して送信 -->
+    <div id="sousin">
+
+        <!-- <form method="GET" action="/start_SoundRecog">
+            <button type="submit">音声認識を開始</button>
+        </form> -->
+
+        <button id="do_recog">音声認識を開始</button>
+
+        <!-- 再生速度を指定 -->
+        <input id="tempo" step=0.02 value=1.0 />
+
+
+        <script>
+        $("#do_recog").on("click", function(){
+            var tempo = $("#tempo").val();
+            var result = {"tempo" : tempo};
+            $.ajax({
+                url: "/start_SoundRecog",
+                type:'POST',
+                data : JSON.stringify(result)
+            })
+            .done(function(){
+                window.location.href = "/edit_recog_result";
+            })
+            .fail(function(){
+                window.alert("oh my pasta");
+            });
+        })
+        </script>
+
+
+
+        <form method="GET" action="/edit_recog_result">
+            <button type="submit">すでに音声認識済み（or 無音判定のみ）</button>
+        </form>
+
+        <style>
+            button {
+                margin: 1.5vh 40vw;
+                width: 20vw;
+                height: 10vh;
+                background-color: pink;
+                }
+        </style>
+    
+    </div>
+
+
+</body>
+</html>

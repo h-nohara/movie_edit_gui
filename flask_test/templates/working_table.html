@@ -1,0 +1,475 @@
+<!doctype html> 
+<html lang =" ja">
+
+<head>
+<meta charset="UTF-8">
+
+<!-- main wavesurfer.js lib -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/wavesurfer.js/1.2.3/wavesurfer.min.js"></script>
+<!-- d3.js -->
+<script type="text/javascript" src="/static/d3/d3.js"></script>
+<!-- jquery -->
+<script src="/static/jquery-3.3.1.min.js"></script>
+
+
+
+</head>
+
+<body>
+
+    <style>
+        body {padding-bottom: 100px;}
+    </style>
+
+    <p>{{ sound_name}}</p>
+
+
+    <!-- ここに波形が表示される -->
+    <div id="waveform"></div>
+
+    <script>
+        var wavesurfer = WaveSurfer.create({
+            container: '#waveform',
+            waveColor: 'darkorange',
+            progressColor: 'purple',
+            splitChannels: false,
+            height: 200,
+            // scrollParent: true,
+        });
+
+        // wavesurfer.load('https://wavesurfer-js.org/example/split-channels/stereo.mp3');
+        // wavesurfer.load("http://localhost:8000/oto.wav")
+        // wavesurfer.load("sozai/otoawase_ai3.wav")
+        wavesurfer.load("{{ sound_name }}");
+    </script>
+
+
+
+    <div id="under_wave">
+
+        <style>
+            #under_wave {margin: 5vh 0 0 0; width: 100vw; height: 31vh;}
+            #play_button {float: left; width: 40vw;}
+            #video_player {float: left; width: 60vw;}
+        </style>
+
+        <div id="play_button">
+
+            <!-- 再生/停止ボタン -->
+            <p align="center">
+                <button class="btn btn-primary" onclick="wavesurfer.playPause()">
+                    <i class="glyphicon glyphicon-play"></i>
+                    Play/Stop
+                </button>
+            </p>
+            
+            
+            
+            <!-- 再生時間を表示 -->
+            <p align="center" id="hoge">
+                再生時間
+            </p>
+            <p id="time" align="center">
+                time
+            </p>
+        
+            <script>
+                function show_time(){
+                    var duration = wavesurfer.getCurrentTime();
+                    document.getElementById("time").innerHTML = duration;
+                }
+        
+                setInterval('show_time()',1);  // 1000msで1s
+            </script>
+        </div>
+
+
+        <!-- 動画プレーヤー -->
+        <div id="video_player">
+            <!-- <video id="video" src="sozai/fujikawa1.MP4" controls></video> -->
+            <video id="video" src= {{movie_name}} controls></video>
+
+    
+            <style>
+                video {height: 30vh;}
+            </style>
+    
+            <script>
+                var vid = document.getElementById("video");
+                have_played = true;
+
+                function setCurTime(start_time, end_time) {
+                    vid.currentTime = start_time; // 開始 22 秒
+                    // vid.addEventListener("timeupdate", function(){
+                    //     console.log(vid.currentTime);
+                    //     console.log(end_time);
+                    //     if (parseFloat(vid.currentTime) >= end_time) { // 終了 46秒
+                    //         vid.pause();
+                    //         console.log("hoge");
+                    //     }
+                    // });
+
+                    vid.play();
+                }
+            </script>
+        </div>
+    </div>
+    
+
+
+
+
+    <div id="setumei">
+        <p>
+            start_time　　end_time 　　　　　　　言葉　　　　　　　　　　　　　　　use　テロップ
+            <style>
+                #setumei {margin: 3vh 5% 0 5%; width: 80%; clear: both;}
+            </style>
+        </p>
+    </div>
+
+    <!-- スクロールボックス -->
+    <div id="scroll_wrapper">
+        <div id="scroll_inner"></div>
+        <style>
+            #scroll_wrapper {
+                overflow:auto;
+                position: relative;
+                text-align: center;
+                width:90%;
+                height:250px;
+                padding:5px;
+                margin: 1% 2% 3% 2%;
+                border:1px solid #000;
+                background-color:#F9F9F9;
+                color:#000;
+                font-size:12px;
+                }
+            #scroll_inner {text-align: center; padding-bottom: 300px;}
+            input {height: 40px; font-size: 17px;}
+
+            .one_line {
+                height: 50px;
+                width: 100%;
+                text-align: center;
+                display: block;
+                margin: 0px 0px;
+                padding: 0;
+                background-color: gray;
+                }
+
+            .start_time {float: left; margin:0; width: 8%;}
+            .end_time {float: left; margin: 0; width: 8%;}
+            .word {float: left; margin: 0; width: 20%;}
+            .use {float: left; margin: 0.2% 1%;}
+            .telop {float: left; margin: 0.2% 1%;}
+            .telop_word {float: left; margin: 0; width: 15%;}
+            .font {float: left; margin: 1% 2%;}
+            .telop_size {float: left; margin:0; width: 6%;}
+            .color {float: left; margin: 0.5% 6%;}
+        </style>
+
+    </div>
+
+
+
+    <!-- スクロールボックス内のone_lineをクリックした時の関数 -->
+    <script>
+
+        // ここでグローバル変数を宣言しておく
+        var current_chunk_number;
+        var next_chunk_number;
+        var next_chunk_start_time;
+
+        // 上記の変数を更新する関数
+        function update_chunk_info(c_c_number){
+            next_chunk_number = current_chunk_number + 1;
+            next_chunk_start_time = $("#chunk_"+next_chunk_number).find(".start_time").attr("value")
+            next_chunk_start_time = parseFloat(next_chunk_start_time);
+        }
+
+
+        // 位置情報を更新
+        $(function(){
+            $(document).on('click', ".one_line", function(){
+                var the_id = $(this).attr("id");
+                current_chunk_number = parseFloat(the_id.split("_")[1]);
+                update_chunk_info(current_chunk_number);
+            });
+        });
+
+
+        // プレイヤーの再生位置をstart_timeに移動して再生開始
+        $(function() {
+            
+            $(document).on('click', ".one_line", function(){
+                var the_start_time = $(this).find(".start_time").attr("value");
+                the_start_time = parseFloat(the_start_time);
+                var the_end_time = $(this).find(".end_time").attr("value");
+                the_end_time = parseFloat(the_end_time);
+
+
+                // 音声スタート
+                wavesurfer.play(the_start_time, the_end_time);
+                // 動画スタート
+                setCurTime(the_start_time, the_end_time);
+            });
+        });
+
+        // スクロールボックス内の位置を移動
+        $(function() {
+            
+            $(document).on('click', ".one_line", function() {
+
+                // こことか参考にhttps://webmanab-html.com/tip/scroll-box-animation/
+                var pos = $(this).position();
+                var scrollH = $('#scroll_wrapper').scrollTop();
+                var position = pos.top + scrollH;
+                $("#scroll_wrapper").animate({scrollTop : position}, 1);
+            });
+        });
+
+
+    </script>
+
+
+    
+    <!-- csvファイルを読み込み -->
+    <div id="read_csv">
+        <style>
+            #read_csv {text-align: center;}
+        </style>
+        <p>csvを読み込む</p>
+        <form name="myform">
+            <input name="myfile" type="file" /><br/>
+        </form>
+    </div>
+
+    <script>
+
+        var form = document.forms.myform;  //Form要素を取得する
+
+        form.myfile.addEventListener( 'change', function(e) {
+
+            var result = e.target.files[0];
+            console.log(result);
+            var reader = new FileReader();  //FileReaderのインスタンスを作成する
+            reader.readAsText( result );  //読み込んだファイルの中身を取得する
+        
+            //ファイルの中身を取得後に処理を行う
+            reader.addEventListener( 'load', function() {
+    
+                //CSVを1行ずつ読み込む
+                var chunks = reader.result.split('\n');
+
+                var num = 0;
+                for (var chunk of chunks){
+                    console.log(chunk);
+                    var the_three = chunk.split(",");
+                }
+
+
+                var theData = chunks.slice(1, chunks.length-1);
+                var selection = d3.select("#scroll_inner").selectAll("div").data(theData).enter();
+
+                one_line = selection.append("div").attr("class", "one_line")
+                    .attr("id", function(d, i){return "chunk_"+i});
+
+                // 読み込むデータフレームの列番号
+                // 0:word, 1:start_time, 2:end_time, 3:is_use, 4:is_telop, 5:telop_word, 6:font, 7:fontsize, 8:color
+
+                // start_time
+                one_line.append("input").attr("class", "start_time").attr("type", "number").attr("step", 0.1)
+                    .attr("value", function(d){return d.split(",")[1];});
+                // end_time
+                one_line.append("input").attr("class", "end_time").attr("type", "number").attr("step", 0.1)
+                    .attr("value", function(d){return d.split(",")[2];});
+                // word
+                one_line.append("input").attr("class", "word").attr("type", "text")
+                    .attr("value", function(d){return d.split(",")[0];});
+
+                // use
+                one_line.append("input").attr("type", "checkbox").attr("class", "use")
+                    .attr("checked", function(d){
+                        var binal = parseInt(d.split(",")[3]);
+                        if (binal==1){return true;}
+                    });
+                // telop
+                one_line.append("input").attr("type", "checkbox").attr("class", "telop")
+                    .attr("checked", function(d){
+                        var binal = parseInt(d.split(",")[4]);
+                        if (binal==1){
+                            return true;}
+                    });
+                // telop_word
+                one_line.append("input").attr("class", "telop_word").attr("type", "text")
+                    .attr("value", function(d){return d.split(",")[5];});
+
+                // font
+                var select_box = one_line.append("select").attr("class", "font");
+                select_box.append("option").attr("value", "keifont").append("p").text("keifont");
+                select_box.append("option").attr("value", "hiragino").append("p").text("ヒラギノ");
+                select_box.append("option").attr("value", "keifont").append("p").text("gankai");
+                select_box.append("option").attr("value", "hiragino").append("p").text("hirakaku");
+                select_box.append("option").attr("value", "kaiso").append("p").text("kaiso");
+                select_box.append("option").attr("value", "iroha").append("p").text("iroha");
+                // font_size
+                one_line.append("input").attr("class", "telop_size").attr("type", "number")
+                    .attr("step", 10).attr("value", function(d){return d.split(",")[7];});
+                // color
+                var select_box = one_line.append("select").attr("class", "color");
+                select_box.append("option").attr("value", "pink_white_pink").append("p").text("pink_white_pink");
+                select_box.append("option").attr("value", "red_white_red").append("p").text("red_white_red");
+                select_box.append("option").attr("value", "blue_red").append("p").text("blue_red");
+
+                
+                
+                // 初期値
+                current_chunk_number = 0;
+                // update_chunk_info(current_chunk_number);
+                next_chunk_number = current_chunk_number + 1;
+                next_chunk_start_time = $("#chunk_"+next_chunk_number).find(".start_time").attr("value");
+                next_chunk_start_time = parseFloat(next_chunk_start_time);
+
+            })
+        })
+    </script>
+
+
+
+    <!-- start_time, end_time　の値を更新を反映させる -->
+    <script>
+        $(document).on("click", ".start_time", function(){
+            var new_value = $(this).val();
+            $(this).attr("value", new_value);
+        });
+
+        $(document).on("click", ".end_time", function(){
+            var new_value = $(this).val();
+            $(this).attr("value", new_value);
+        });
+    </script>
+
+
+
+
+    <script>
+    // 再生中、自動でスクロール
+
+        function proceed(){
+            var time_music = parseFloat(wavesurfer.getCurrentTime());
+            if (time_music >= next_chunk_start_time){
+
+                // スクロール
+                var pos = $("#chunk_"+next_chunk_number).position();
+                var scrollH = $('#scroll_wrapper').scrollTop();
+                var position = pos.top + scrollH;
+                $("#scroll_wrapper").animate({scrollTop : position}, 1);
+
+
+                // 現在の位置情報を更新
+                current_chunk_number = current_chunk_number + 1;
+                // update_chunk_info(current_chunk_number);
+                next_chunk_number = current_chunk_number + 1;
+                next_chunk_start_time = $("#chunk_"+next_chunk_number).find(".start_time").attr("value")
+                next_chunk_start_time = parseFloat(next_chunk_start_time);
+
+            }
+        }
+        setInterval('proceed()',1);  // 1000(ms)(=1s)に一回
+
+
+    </script>
+
+
+    
+    <!-- 最終的なデータを送信 -->
+    <div id="send_button">
+        <style>
+            #send_button {text-align: center; margin-top: 3vh;}
+            #send_button button {width: 10vw; height: 10vh; margin: 1vh 0; background-color: pink;}
+        </style>
+        <button onclick="send()">結果を保存して次の画面に</button>
+
+        <form method="GET" action="/check_to_create">
+            <button type="submit">単に次の画面へ</button>
+        </form>
+        
+    </div>
+
+    <script>
+        function send(){
+
+            var start_times = [];
+            var end_times = [];
+            var words = [];
+            var is_use = [];
+            var is_telop = [];
+            var telop_words = [];
+            var fonts = [];
+            var telop_sizes = [];
+            var colors = [];
+
+            $(".start_time").each(function(i, o){
+                start_times.push($(o).val());
+            });
+            $(".end_time").each(function(i, o){
+                end_times.push($(o).val());
+            });
+            $(".word").each(function(i, o){
+                words.push($(o).val());
+            });
+            $(".use").each(function(i, o){
+                if ($(o).prop("checked")){
+                    is_use.push(1);
+                }
+                else {
+                    is_use.push(0);
+                }
+            });
+            $(".telop").each(function(i, o){
+                if ($(o).prop("checked")){
+                    is_telop.push(1);
+                }
+                else {
+                    is_telop.push(0);
+                }
+            });
+            $(".telop_word").each(function(i, o){
+                telop_words.push($(o).val());
+            });
+            $(".font").each(function(i, o){
+                fonts.push($(o).val());
+            });
+            $(".telop_size").each(function(i, o){
+                telop_sizes.push($(o).val());
+            });
+            $(".color").each(function(i, o){
+                colors.push($(o).val());
+            });
+
+
+            var result = {
+                "s":start_times, "e":end_times, "w":telop_words, "recognized_w":words,
+                "is_use":is_use, "is_telop":is_telop, "font":fonts, "fontsize":telop_sizes,
+                "color":colors
+                };
+
+            $.ajax({
+                url: "/save_final_df",
+                type:'POST',
+                data : JSON.stringify(result),
+                timeout:30000,
+            })
+            .done(function(){
+                window.location.href = "/check_to_create";  // postが成功したら（final.csvが保存されたら）次の画面へ遷移
+            })
+            .fail(function(){
+                window.alert("oh my pasta");
+            });
+        }
+    </script>
+
+    </body>
+
+</html>
